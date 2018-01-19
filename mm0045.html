@@ -551,9 +551,9 @@ function getOctantByString(str) {
 		if(s.octants[i].name == str) { return s.octants[i]; }}}
 function Octant(x,y,z) { this.x = x, this.y = y, this.z = z;
 	if(x && y && z)  { this.name = "Te";}		else if(x && y && !z) { this.name = "Ti";}
-	else if(x && !y && z) { this.name = "Si";}	else if(x && !y && !z){ this.name = "Se";}
+	else if(x && !y && z) { this.name = "Se";}	else if(x && !y && !z){ this.name = "Si";}
 	else if(!x && y && z) { this.name = "Ne";}	else if(!x && y && !z){ this.name = "Ni";}
-	else if(!x && !y && z){ this.name = "Fi";}	else if(!x && !y && !z){this.name = "Fe";}}
+	else if(!x && !y && z){ this.name = "Fe";}	else if(!x && !y && !z){this.name = "Fi";}}
 function newOctant(x,y,z) { var octant = new Octant(x,y,z); s.octants.push(octant); }
 function initSpace() {
 	newOctant(false,false,false);	newOctant(false,false,true);
