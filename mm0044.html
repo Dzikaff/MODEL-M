@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html><head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8">
+		<title>Model M</title>
+		<style>
+
+			@font-face { font-family:'profont';
+				src:url('MM_files/profontwindows-webfont.woff2') format('woff2'),
+					url('MM_files/profontwindows-webfont.woff') format('woff');
+				font-weight:normal; font-style:normal; }
+			html,body{ height:100%;	margin:0px;	font-family:tahoma;	font-size:13px; }
+			p{ margin-left: 21px; }
+			#fontLoader{ position:absolute; top: -500px; }
+			#wrapper{ min-height:100%; margin-bottom: -50px; }
+			.footer,.push {height: 50px;}
+			#content{ padding-top: 10px; top:-8px; height: 100%; }
+			#header{ padding: 6px 0px 0px 7px; border-bottom: 1px solid black; }
+			.tab{
+				position:relative;
+				background-color:white;
+				display:inline;
+				border: 1px solid black;
+				border-bottom: 0px none;
+				margin: 0px 3px 0px 3px;
+				padding: 0px 3px 0px 3px;}
+			#graphContainer{
+				width:100%;
+				min-height:500px;}
+			#typeGraph{
+				width:800px;
+				height:800px; }
+			#typeContainer{
+				width:610px;
+				height:610px; }
+
+			table {
+				border-spacing: 0px;
+				text-align:left;
+				border-right: 1px solid #888;
+				border-bottom: 1px solid #888;}
+
+			td {
+				padding-left: 2px
+				padding-right: 2px;
+				border-top: 1px solid #888;
+				border-left: 1px solid #888;
+
+		</style>
+		<script src="MM_files/jquery-2.js"></script>
+		<script src="MM_files/underscore-min.js"></script>
+		<script src="MM_files/three.min.js"></script>
+		<script>
+
+var s = {
+	developerMode: true, introComplete: true,
+	octants: [], sociotypes: [], matrices: [],
+	initTab: "type", currentTab: "", initTabs: [], tabs: ["type"],
+	boxSize: 100,
+	/*xR: 0.378, 	yR: 0.478, 	zR: -0.18,	xP: 84, 	yP: -60, 	zP: 150,*/
+	/*xR: 0.388, 	yR: -0.792, zR: 0.28,	xP: -163, 	yP: -62, 	zP: 150,*/
+	//xR: 0.402, 	yR: -0.742, zR: 0.28,		xP: -150, 	yP: -64, 	zP: 150,
+	//xR: 0.522, 	yR: -0.282, zR: 0.160,		xP: -47, 	yP: -87, 	zP: 150,
+	//xR: 0.602,	yR: -0.332,	zR: -3.469,		xP: -55,	yP: -89,	zP: 150,
+	//xR: 0.602,	yR: -0.332,	zR: -0.469,		xP: -55,	yP: -89,	zP: 150,
+	xR: 0.511,	yR: -0.412,	zR: 0,		xP: -78,	yP: -90,	zP: 150,
+	xCR: 0, yCR: 0, zCR: 0, xCP: 0, yCP: 0, zCP: 0,
+	rotateObjects: [],
+
+	//ROT: (0.37800000000000006,0.47800000000000015,-0.18000000000000002) POS: (81,-70,150) 
+	//ROT: (0.388,-0.7920000000000008,0.28000000000000014) POS: (-163,-62,150) 
+	//ROT: (0.398,-0.742,0.28) POS: (-150,-60,150)
+	//ROT: (0.5220000000000001,-0.2819999999999996,0.15999999999999992) POS: (-47,-87,150) 
+	//ROT: (0.552,-0.18199999999999988,0.10999999999999999) POS: (-23,-85,150) 
+	//ROT: (0.6020000000000001,-0.332,-3.469446951953614e-18) POS: (-55,-89,150) 
+	//(0.572,-0.332,-0.469) POS: (-50,-103,150) 
+	//ROT: (0.5119999999999999,-0.4120000000000001,0.0010000000000003097) POS: (-78,-90,150) 
+	//perfect align: ROT: (0.46099999999999997,-0.422,0) POS: (-78,-90,150) 
+	persons: [] }
+
+
+
+// TABS BEGIN
+
+
+// kiddo mode: näyttää type testin tuloksen INTP piirrettynä väriliiduilla. for backwards compatiblity
+
+// conditional hierarchies tab. list maker with ui for function/ie/both preference, numeric value at least allowed, maybe other values too.
+
+
+
+function getTabByHandle(handle){for(var i =0; i<s.tabs.length; i++){ if(s.tabs[i].handle == handle) {return s.tabs[i];}}}
+
+function alreadyInitTab(tabHandle){
+	if (_.contains(s.initTabs,tabHandle)) {return true;}
+	else {s.initTabs.push(tabHandle); return false;}}
+
+function initContent(tabHandle){
+	var alreadyInit = alreadyInitTab(tabHandle);
+	s.currentTab = tabHandle;
+	var content = document.getElementById("content"); var tab;
+	tab = getTabByHandle(tabHandle);
+	if(s.introComplete) {
+		for(var i = 0; i < s.tabs.length; i++){
+			if(s.tabs[i].handle == tabHandle) {
+				s.tabs[i].active = true;
+				document.getElementById(s.tabs[i].handle).style.borderBottom = "1px solid white"; }
+			else {
+				s.tabs[i].active = false;
+				document.getElementById(s.tabs[i].handle).style.borderBottom = "1px solid black"; }}}
+	if(!s.introComplete) { content.innerHTML = tab.introCode; }
+	else if(!s.developerMode && tab.clientCode) { content.innerHTML = tab.clientCode; }
+	else {content.innerHTML = tab.code; }
+	if(tabHandle == "quiz") { displayQuiz(alreadyInit); }
+	if(tabHandle == "type") { displayType(alreadyInit); }
+	if(tabHandle == "rels") { displayRels(alreadyInit); }
+	if(tabHandle == "cell") { displayCell(alreadyInit); }
+	if(tabHandle == "graph") { displayRels(alreadyInit); displayGraph(alreadyInit); }}
+
+function getTheoryByHandle(handle){for(var i =0; i<s.theories.length; i++){ if(s.theories[i].handle == handle) {return s.theories[i];}}}
+function initSettings(){
+	s.introComplete = true;
+	var ret = "";
+	/*ret += "<div class='settings'>Theory: <select>";
+	for(i=0; i<s.theories.length; i++){ ret += s.theories[i].code; } // XXX
+	var theory = getTheoryByHandle(s.currentTheory);
+	ret += "</select> Language: <select>";
+	for(i=0; i<theory.languages.length; i++) { ret += theory.languages[i].code; }*/
+	ret += "</select><div style='float:right'><input id='developerMode' type='checkbox' onmousedown='developerMode();'></input></div></div>";
+	return ret;}
+
+function initHeader(){
+	if(s.introComplete){
+		document.getElementById("header").style.display = 'block';
+		var buffer = ""; var input;
+		buffer += initSettings();
+		for(i=0; i<s.tabs.length; i++){
+			buffer +=
+				"<div class='tab' id='" + s.tabs[i].handle + "'\
+				onmousedown='initContent(\"" + s.tabs[i].handle + "\")'>" +
+				s.tabs[i].name + "</div>";	}
+		document.getElementById("header").innerHTML = buffer;
+		if(s.developerMode) { document.getElementById("developerMode").setAttribute("checked","true");}}
+	else { document.getElementById("header").style.display = 'none'; }}
+
+function Tab(handle,active,name,code,clientCode,introCode){
+	this.handle = handle;
+	this.active = active;
+	this.name = name;
+	this.code = code;
+	this.clientCode = clientCode;
+	this.introCode = introCode; }
+
+function introNext() { initContent("quiz"); }
+function quizNext() { initContent("rels"); }
+function relsNext() { initContent("cell"); }
+function cellNext() { s.introComplete = true; initHeader(); initContent("intro"); }
+function initTabs() {
+	var tabs = []; var buffer = {};
+	for(i=0; i < s.tabs.length; i++){
+		var theory;
+		buffer.active = false;
+		buffer.clientCode = false;
+		buffer.introCode = false;
+		buffer.handle = s.tabs[i];
+
+		if(s.tabs[i] == "intro") {
+			buffer.name = "Instructions";
+			buffer.clientCode =
+				"<p>You can configure Weatherman to make your own presentation. You can send the presentation to someone as an URL or study it yourself. Hover over THIS to study the controls.</p><ul>\
+				<li>THIS is the theory selector.</li>\
+				<li>THIS is the language selector. Many languages are available for Socionics.</li>\
+				<li>THIS is the reference selector. Many references are available for Socionics.</li></ul>\
+				<p>You need those for comparing theories in the Cellular Automaton tab. Click 'Next' to go back there.</p>\
+				<button id='instructionsNext' onmousedown='instructionsNext();'>Next</button><br />\
+				<button id='instructionsMore' onmousedown='instructionsMore();'>More instructions...</button>";
+			buffer.introCode =
+				"<p><em>Weatherman is going to tell you what's going on.</em></p>\
+				<p>You've probably heard of a personality theory called MBTI. It produces four-letter codes that are supposed to be your personality type. The codes look like this: ESTP, INFJ, ENTJ and so on.</p>\
+				<p>If you see a code so that the last letter is lower case, such as INTp, then it's not an MBTI code. That's a socionics code. A code with a lower case fourth letter stands for a sociotype.</p>\
+				<p>You can use this app to compare MBTI with Socionics to find out which one you like better.</p>\
+				<p>When you click next you will be asked four questions about yourself.</p>\
+				<button id='introNext' onmousedown='introNext();'>Next</button>";}
+
+		else if(s.tabs[i] == "quiz") {
+			buffer.name = "Quiz";
+			buffer.code =
+				"<table id='questions'></table>\
+				<button id='calculateType' onmousedown='generateResult();'>Get your type!</button>\
+				<div id='result'></div>";
+			buffer.clientCode = buffer.code;
+			buffer.introCode =
+				"<p>Look, this isn't the easiest part. These questionnaires aren't that reliable in the first place. Spending a lot of time to answer many questions doesn't make the result that much more reliable. So just answer these and remember:</p>\
+				<p>If you're unsure whether you're nice or cold, you're more likely to perceive. If you're unsure whether you're firm or impressionable, you're more likely to judge.</p>" + buffer.code;
+			buffer.moralystCode =
+				"<p>Think of some particular event. Some single thing that happened and that you can remember. Then describe that event by answering these questions.</p>" + buffer.code; }
+
+		else if(s.tabs[i] == "type") {
+			buffer.name = "Type";
+			buffer.code =
+				"<div id='typeHeader'></div>\
+				<div id='typeGraph'></div>";
+				/*"<p>Sociotype Imaging Tool</p>\
+				<div id='typeContainer'></div><table id='sociotype'></table>\
+				<div id='legend'></div>\
+				<div id='typeDescription'></div>";*/
+			buffer.clientCode = buffer.code;
+			buffer.introCode = buffer.code;
+			buffer.moralystCode = buffer.code; }
+
+		else if(s.tabs[i] == "rels") {
+			buffer.name = "Table";
+			buffer.code =
+				"<div id='personUI'></div>\
+				<div id='personBar'></div>\
+				<div id='typeBar'></div>\
+				<table id='relations'></table>";
+			buffer.clientCode = buffer.code;
+			buffer.introCode =
+				"<p>MBTI and Socionics have an opposite idea of what your ideal partner is like.</p>\
+				<p>According to Socionics, the partner MBTI declares best for you is actually the worst for you!</p>\
+				<p>Your worst match is your <em>conflictor</em> and your best match is your <em>dual</em>.</p>"
+				+ buffer.code +
+				"<p>These theories can't both be right. The reason they produce different results is that their form is different. Click 'Next' to see some wacky graphical presentations of these forms</p>\
+				<button id='relsNext' onmousedown='relsNext();'>Next</button>"; }
+				// and to unlock all features of this app.
+
+		else if(s.tabs[i] == "cell") {
+			buffer.name = "Cellular automaton";
+			buffer.code =
+				"<div id='cellUI'></div>\
+				<table id='cell'></table>";
+			buffer.clientCode = buffer.code;
+			buffer.introCode =
+				"<h2>This is MBTI:</h2>\
+				<table id='MBTICell'></table>\
+				<h2>This is Socionics:</h2>\
+				<table id='SocionicsCell'></table>\
+				<p>I didn't invent those theories. But the next one I did.</p>\
+				<h2>Moralysis</h2>\
+				<table id='MoralysisCell'></table>\
+				<p>You're done with the intro. Click 'Next' to unlock all features of this app.</p>\
+				<button id='cellNext' onmousedown='cellNext();'>Next</button>"; }
+
+		else if(s.tabs[i] == "graph") {
+			buffer.name = "Graph";
+			buffer.code =
+				"<div id='personUI'></div>\
+				<div id='personBar'></div>\
+				<div id='typeBar'></div>\
+				<div id='graphContainer'></div>";}
+		else if(s.tabs[i] == "match") {
+			buffer.name = "Find Matches";
+			buffer.code = 
+				"match";}
+		s.tabs[i] = new Tab(buffer.handle, buffer.active, buffer.name, buffer.code, buffer.clientCode, buffer.introCode);}}
+
+
+
+// TABS END, TYPE BEGIN
+
+
+
+function displayType(alreadyInit) {
+	var e = document.getElementById("typeHeader");
+	e.innerHTML = s.currentSociotype.name;
+	init3D(s.currentSociotype); }
+
+
+
+// TYPE END, 3D BEGIN
+
+
+
+
+Math.radians = function(degrees) { return degrees * Math.PI / 180; };
+Math.degrees = function(radians) { return radians * 180 / Math.PI; };
+function init3D(t) {
+    var container = document.querySelector('#typeGraph');
+    var width = container.clientWidth;    var height = container.clientHeight;    var aspect = width / height;
+    var divisor = 8; /*12*/    var frustumSize = 1000;
+    s.renderer = new THREE.WebGLRenderer( { alpha: true } );    s.renderer.sortObjects = false;
+    s.camera = new THREE.OrthographicCamera( frustumSize * aspect / - divisor, frustumSize * aspect / divisor, frustumSize / divisor, frustumSize / - divisor, 1, 2000 );    s.rotateObjects.push(s.camera);
+    s.camera.rotation.x = s.xR;    s.camera.rotation.y = s.yR;    s.camera.rotation.z = s.zR
+    s.camera.position.x = s.xP;    s.camera.position.y = s.yP;    s.camera.position.z = s.zP;   
+    s.scene = new THREE.Scene();   s.scene.add(s.camera);	s.scene2 = new THREE.Scene();   s.scene2.add(s.camera);
+    s.renderer.setSize(width, height);    s.renderer.autoClear = false;	container.appendChild(s.renderer.domElement);
+
+    // materials
+    var material = new THREE.MeshLambertMaterial({
+    	color: 0x0033cc, transparent: true, opacity: 0.236, side: THREE.DoubleSide, depthWrite: false, depthTest: false });
+    var coneMaterial = new THREE.MeshBasicMaterial( {color: 0xff0000} );
+
+    // orbit for light lol, only twice, first 1s then 1.618 s, if not alreadyinit
+    var lX = -125; var lY = -300; var lZ = 50;
+    var lRho = Math.sqrt(lX*lX + lY*lY + lZ*lZ); var lTheta = Math.atan2(lY, lX); var lPhi = Math.acos(lZ / lRho);
+    console.log("Rho: "+lRho+", Theta: "+lTheta+", Phi: "+lPhi);
+    var light = new THREE.PointLight(0xFFFFFF); s.rotateObjects.push(light);
+    light.position.x = lX; light.position.y = lY; light.position.z = lZ;
+    s.scene.add(light);
+    var devFlag = new THREE.Mesh( new THREE.BoxBufferGeometry( 20, 20, 20 ), material);
+    devFlag.position.x = lX; devFlag.position.y = lY; devFlag.position.z = lZ;
+    s.scene.add(devFlag);
+
+    // CUBE revert to 4 piece for to designate input and output and blocks
+    var r = Math.radians(90);
+	var p = s.boxSize / 4;
+    
+    var box = new THREE.Mesh( new THREE.BoxBufferGeometry( s.boxSize, s.boxSize, s.boxSize ), material);  
+    var xyPlane = new THREE.Mesh( new THREE.PlaneGeometry( s.boxSize, s.boxSize ), material); xyPlane.rotation.z = r;
+    var xzPlane = new THREE.Mesh( new THREE.PlaneGeometry( s.boxSize, s.boxSize ), material); xzPlane.rotation.y = r;
+    var yzPlane = new THREE.Mesh( new THREE.PlaneGeometry( s.boxSize, s.boxSize ), material); yzPlane.rotation.x = r;
+    //s.plane = new THREE.Mesh( new THREE.PlaneGeometry( s.boxSize / 2, s.boxSize / 2 ), material4); s.rotateObjects.push(s.plane); s.scene.add(s.plane);
+    s.scene.add(xyPlane);	s.scene.add(xzPlane);	s.scene.add(yzPlane);    s.scene.add(box);
+
+    // IEs
+    var x, y, z, sprite; var offset = 0;
+    for(var i = 0; i < s.octants.length; i++) {
+    	if(s.octants[i].x) { x = (p + offset) } else { x = -(p + offset) }
+    	if(s.octants[i].y) { y = (p + offset) } else { y = -(p + offset) }
+    	if(s.octants[i].z) { z = (p + offset) } else { z = -(p + offset) }
+    	sprite = makeTextSprite( s.octants[i].name, x, y, z, { fontsize: 88, fontface: 'profont', borderColor: {r:0, g:0, b:0, a:1.0}, borderThickness:0, radius:8, vAlign:"center", hAlign:"center" } ); s.scene.add( sprite ); }
+    
+    // AXES
+    var from = new THREE.Vector3( -2 * p, 0, 0);	var to = new THREE.Vector3( 2 * p, 0, 0);
+    var direction = to.clone().sub(from);			var length = direction.length();
+    var arrow = new THREE.ArrowHelper(direction.normalize(), from, length, 0x008888, 8, 3 ); s.scene.add( arrow );
+	var from = new THREE.Vector3( 0, -2 * p, 0);	var to = new THREE.Vector3( 0, 2 * p, 0);
+    var direction = to.clone().sub(from);			var length = direction.length();
+    var arrow = new THREE.ArrowHelper(direction.normalize(), from, length, 0x008888, 8, 3 ); s.scene.add( arrow );
+	var from = new THREE.Vector3( 0, 0, -2 * p );	var to = new THREE.Vector3( 0, 0, 2 * p);
+    var direction = to.clone().sub(from);			var length = direction.length();
+    var arrow = new THREE.ArrowHelper(direction.normalize(), from, length, 0x008888, 8, 3 ); s.scene.add( arrow );
+
+    /*
+    var off = 10;
+    var from = new THREE.Vector3( -p, -p, -p + off );		var to = new THREE.Vector3( -p, -p, p - off );
+	var direction = to.clone().sub(from);			var length = direction.length();
+	var arrow = new THREE.ArrowHelper(direction.normalize(), from, length, 0x000000 );
+	s.scene.add( arrow );*/
+
+	var coneW = 5; 
+
+
+	/*var xYZCone = new THREE.Mesh( new THREE.ConeGeometry( coneW, 30, 32 ), coneMaterial ); xYZCone.rotation.z = -r;
+	xYZCone.position.z = p - (coneW / 2);	xYZCone.position.y = p - (coneW / 2); s.scene2.add( xYZCone );
+	var xYzCone = new THREE.Mesh( new THREE.ConeGeometry( coneW, 30, 32 ), coneMaterial ); xYzCone.rotation.z = -r;
+	xYzCone.position.z = -p + (coneW / 2);	xYzCone.position.y = p - (coneW / 2); s.scene2.add( xYzCone );
+	var xyZCone = new THREE.Mesh( new THREE.ConeGeometry( coneW, 30, 32 ), coneMaterial ); xyZCone.rotation.z = r;
+	xyZCone.position.z = p - (coneW / 2);	xyZCone.position.y = -(p + (coneW/2)); s.scene2.add( xyZCone );
+	var xyzCone = new THREE.Mesh( new THREE.ConeGeometry( coneW, 30, 32 ), coneMaterial ); xyzCone.rotation.z = r;
+	xyzCone.position.z = -p + (coneW / 2);	xyzCone.position.y = -(p + (coneW/2)); s.scene2.add( xyzCone );
+
+	var coneXyZ = new THREE.Mesh( new THREE.ConeGeometry( coneW, 30, 32 ), coneMaterial ); coneXyZ.rotation.x = -r;
+	coneXyZ.position.x = p - (coneW / 2);	coneXyZ.position.y = p - (coneW / 2); s.scene2.add( coneXyZ );
+	var coneXyz = new THREE.Mesh( new THREE.ConeGeometry( coneW, 30, 32 ), coneMaterial ); coneXyz.rotation.x = -r;
+	coneXyz.position.x = -p + (coneW / 2);	coneXyz.position.y = p - (coneW / 2); s.scene2.add( coneXyz );*/
+	/*var xyZCone = new THREE.Mesh( new THREE.ConeGeometry( coneW, 30, 32 ), coneMaterial ); xyZCone.rotation.z = r;
+	xyZCone.position.z = p - (coneW / 2);	xyZCone.position.y = -(p + (coneW/2)); s.scene.add( xyZCone );
+	var xyzCone = new THREE.Mesh( new THREE.ConeGeometry( coneW, 30, 32 ), coneMaterial ); xyzCone.rotation.z = r;
+	xyzCone.position.z = -p + (coneW / 2);	xyzCone.position.y = -(p + (coneW/2)); s.scene.add( xyzCone );*/
+
+    s.rotateObject = s.rotateObjects[0];
+    var T = 0;	var T1 = 6; var T2 = 10;
+    animate(false); 
+
+	function animate(debug) {
+		requestAnimationFrame( animate );
+		if(T < T1) 		{ T += 0.1; }
+		else if(T < T2) { T += 0.062; }
+		else 			{ T += 0.038; }
+		//if(T < T1)		{ devFlag.position.y = 324*Math.cos(T)+0;		devFlag.position.z = 324*Math.sin(T)+0; }
+		//else if(T < T2)	{ devFlag.position.x = 324*Math.cos(T-(T1/2.2))+0;devFlag.position.z = 324*Math.sin(T-(T1/2.2))+0; }
+		//else 			{ devFlag.position.x = 324*Math.cos(T)+0;		devFlag.position.y = 324*Math.sin(T)+0; }
+		if(T < T1)		{ light.position.y = 324*Math.cos(T)+0;			light.position.z = 324*Math.sin(T)+0; }
+		else if(T < T2)	{ light.position.x = 324*Math.cos(T-(T1/2.2))+0;	light.position.z = 324*Math.sin(T-(T1/2.2))+0; }
+		else 			{ light.position.x = 324*Math.cos(T)+0;			light.position.y = 324*Math.sin(T)+0; }
+		s.renderer.clear();
+		s.renderer.render( s.scene, s.camera );
+		s.renderer.clearDepth();
+		s.renderer.render( s.scene2,s.camera );
+	}}
+
+
+
+
+// quadra differ in terms of extroversion introversion. alpha 00 beta 10 gamma 11 delta 01. the dimension is time from lead to prod func.
+
+
+
+function makeTextSprite( message, x, y, z, parameters )	{
+		if ( parameters === undefined ) parameters = {};
+		var fontface = parameters.hasOwnProperty("fontface") ? parameters["fontface"] : "Arial";
+		var fontsize = parameters.hasOwnProperty("fontsize") ? parameters["fontsize"] : 18;
+		var borderThickness = parameters.hasOwnProperty("borderThickness") ? parameters["borderThickness"] : 4;
+		var borderColor = parameters.hasOwnProperty("borderColor") ? parameters["borderColor"] : { r:0, g:0, b:0, a:1.0 };
+		var fillColor = parameters.hasOwnProperty("fillColor") ? parameters["fillColor"] : undefined;
+		var textColor = parameters.hasOwnProperty("textColor") ? parameters["textColor"] : { r:0, g:0, b:0, a:1.0 };
+		var radius = parameters.hasOwnProperty("radius") ? parameters["radius"] : 6;
+		var vAlign = parameters.hasOwnProperty("vAlign") ? parameters["vAlign"] : "center";
+		var hAlign = parameters.hasOwnProperty("hAlign") ? parameters["hAlign"] : "center";
+		var canvas = document.createElement('canvas');	var context = canvas.getContext('2d');
+		// set a large-enough fixed-size canvas
+		canvas.width = 2048;	canvas.height = 1024;	context.font = fontsize + "px " + fontface;
+		context.textBaseline = "alphabetic";	context.textAlign = "left";
+		// get size data (height depends only on font size)
+		var metrics = context.measureText( message );	var textWidth = metrics.width;
+		var cx = canvas.width / 2;	var cy = canvas.height / 2;		var tx = textWidth/ 2.0;	var ty = fontsize / 2.0;
+		// then adjust for the justification
+		if ( vAlign == "bottom") ty = 0;		else if (vAlign == "top") ty = fontsize;
+		if (hAlign == "left") tx = 0;			else if (hAlign == "right") tx = textWidth;
+		context.fillStyle = getCanvasColor(textColor);	context.fillText( message, cx - tx, cy + ty);
+		var texture = new THREE.Texture(canvas);	texture.needsUpdate = true;
+		var spriteMaterial = new THREE.SpriteMaterial( { map: texture } );	var sprite = new THREE.Sprite( spriteMaterial );
+		sprite.scale.set(200,100,1);	sprite.position.set(x, y, z);	return sprite; }
+
+
+
+function getCanvasColor ( color ) {	return "rgba(" + color.r + "," + color.g + "," + color.b + "," + color.a + ")";	}
+function rotate(o,x,y,z) {
+	o.rotation.x += x;	o.rotation.y += y;	o.rotation.z += z;
+	if(o === s.camera)  { s.xR += x; s.yR += y; s.zR += z; } else { s.xCR+= x; s.yCR+= y; s.zCR+= z; }
+	s.renderer.render( s.scene, s.camera ); }
+function move(o,x,y,z) {
+	o.position.x += x;	o.position.y += y;	o.position.z += z;
+	if(o === s.camera)  { s.xP += x; s.yP += y; s.zP += z; } else { s.xCP+= x; s.yCP+= y; s.zCP+= z; }
+	s.renderer.render( s.scene, s.camera ); }
+window.addEventListener("keydown", function(e){ o = s.rotateObject;
+	if(s.rotateObject === s.camera) { var r = 0.01; var p = 1; }
+	else 							{ var r = Math.radians(90); var p = s.boxSize / 4; }
+	switch(e.keyCode) {
+		case 16 :
+			for(var i = 0; i < s.rotateObjects.length; i++) {
+				if(s.rotateObject === s.rotateObjects[i])
+					if(i < (s.rotateObjects.length - 1))  { s.rotateObject = s.rotateObjects[i+1]; }
+					else 								{ s.rotateObject = s.rotateObjects[0]; }
+				console.log(s.rotateObject); }
+
+		if(s.rotateObject === s.camera) { s.rotateObject = s.plane; }
+					else 							{ s.rotateObject = s.camera;} break;
+
+		case 87 : 	rotate(o,0,r,0); break;
+		case 68 : 	rotate(o,r,0,0); break;
+		case 88 : 	rotate(o,0,-r,0); break;
+		case 65 : 	rotate(o,-r,0,0); break;
+		case 82 : 	rotate(o,0,0,r); break;
+		case 86 : 	rotate(o,0,0,-r); break;
+
+		case 80 : 	move(o,0,p,0); break;
+		case 222: 	move(o,p,0,0); break;
+		case 189: 	move(o,0,-p,0); break;
+		case 76 : 	move(o,-p,0,0); break;
+		case 73 : 	move(o,0,0,p); break;
+		case 188: 	move(o,0,0,-p); break;
+
+		case 13 :
+			if(s.rotateObject === s.camera) { console.log(
+				e.keyCode + " ROT: (" + s.xR + "," + s.yR + "," + s.zR + ") \
+				POS: (" + s.xP + "," + s.yP + "," + s.zP + ") "); }
+			else { console.log(
+				e.keyCode + " ROT: (" + s.xCR + "," + s.yCR + "," + s.zCR + ") \
+				POS: (" + s.xCP + "," + s.yCP + "," + s.zCP + ") "); }}
+	//console.log(e.keyCode + ": ROT: (" + s.xR + "," + s.yR + "," + s.zR + ") POS: (" + s.xP + "," + s.yP + "," + s.zP + ") ");
+	if(s.rotateObject === s.camera) {
+		console.log(e.keyCode+": ROT: ("+s.xR+","+s.yR+","+s.zR + ") POS: ("+s.xP+","+s.yP+","+s.zP+") "); }
+	else { console.log(e.keyCode + ": ROT: ("+s.xCR+","+s.yCR+","+s.zCR+") POS: ("+s.xCP+","+s.yCP+","+s.zCP+") "); }
+});
+
+
+
+// LANGUAGE BEGIN
+
+
+/*
+function initLanguage(handle) {
+	switch handle
+}
+function initLanguages() {
+	initLanguage("modelA");
+	initLanguage("MBTi");
+	initLanguage("MBTI"); }*/
+
+
+
+// LANGUAGE END, SOCIOTYPE BEGIN
+
+
+
+function matrixNavigate(t,neg,pos) { if(t.acc.includes(neg)) { t.m.push(true); } else { t.m.push(false); }} //redundant:pos
+function initMatrix(t) { t.m = [];
+	matrixNavigate(t,gO(false,false,false),gO(false,false,true));
+	matrixNavigate(t,gO(false,true, false),gO(false,true, true));
+	matrixNavigate(t,gO(true, false,false),gO(true, false,true));
+	matrixNavigate(t,gO(true, true, false),gO(true, true, true));
+	matrixNavigate(t,gO(false,false,true ),gO(false,true, true));
+	matrixNavigate(t,gO(true, false,true ),gO(true, true, true));
+	matrixNavigate(t,gO(false,false,false),gO(false,true,false));
+	matrixNavigate(t,gO(true, false,false),gO(true, true,false));
+	matrixNavigate(t,gO(false,true, false),gO(true, true,false));
+	matrixNavigate(t,gO(false,true, true ),gO(true, true,true ));
+	matrixNavigate(t,gO(false,false,false),gO(true,false,false));
+	matrixNavigate(t,gO(false,false,true ),gO(true,false,true ));
+	var m = t.m; m = [[[m[0],m[1]],[m[2],m[3]]], [[m[4],m[5]],[m[6],m[7]]], [[m[8],m[9]],[m[10],m[11]]]]; t.m = m; }
+
+function navigate(from,to) {	// Terveisiä Heikki Öljysten maahan
+	var d = { x: undefined, y: undefined, z: undefined };
+	if(from.x != to.x) { if(to.x) { d.x = true; } else { d.x = false; }}
+	if(from.y != to.y) { if(to.y) { d.y = true; } else { d.y = false; }}
+	if(from.z != to.z) { if(to.z) { d.z = true; } else { d.z = false; }} return d; }
+function initFuncs(m) { var d = navigate(m[0],m[1]);	
+	if(typeof d.x === "boolean") { m[2] = gO(m[1].x, !m[1].y, m[1].z);		m[3] = gO(m[0].x, !m[0].y, m[0].z);	}
+	else 						 { m[2] = gO(!m[1].x, m[1].y, m[1].z);		m[3] = gO(!m[0].x, m[0].y, m[0].z);	}
+	m[4] = gO(m[2].x, m[2].y, !m[2].z);		m[5] = gO(m[3].x, m[3].y, !m[3].z);
+	m[6] = gO(m[0].x, m[0].y, !m[0].z);		m[7] = gO(m[1].x, m[1].y, !m[1].z); return m; }
+
+function getSociotypeByName(name) {
+	for(var i = 0; i < s.sociotypes.length; i++) { if(s.sociotypes[i].name == name) { return s.sociotypes[i]; }}}
+function Sociotype(name,f,g) {
+	this.name = name;
+	var m = initFuncs([f,g]);	this.funcs = m; // not want to use proving function if not need to
+	this.lead = m[0];	this.crea = m[1];	this.role = m[2];	this.prov = m[3];
+	this.sugg = m[4];	this.mobi = m[5];	this.igno = m[6];	this.demo = m[7];
+	this.ego = [m[0],m[1]];		this.sEgo= [m[2],m[3]]; 	this.sId = [m[4],m[5]]; 	this.id  = [m[6],m[7]];
+	this.mEgo= [m[5],m[6]];		this.sMEgo=[m[6],m[5]];		this.sMId= [m[3],m[2]];		this.mId = [m[7],m[4]];
+	this.saEgo=[m[2],m[4]];		this.saId =[m[5],m[3]];		this.inEgo=[m[0],m[6]];		this.inId= [m[7],m[1]];
+	this.acc = [this.ego[0], this.sEgo[0], this.sId[0], this.id[0]];
+	this.prd = [this.ego[1], this.sEgo[1], this.sId[1], this.id[1]];}
+function newSociotype(f,g) {
+	var name = f + g;
+	f = getOctantByString(f); g = getOctantByString(g);
+	var sociotype = new Sociotype(name,f,g);
+	initMatrix(sociotype);
+	s.sociotypes.push(sociotype); }
+function initSociotypes(){
+	newSociotype("Fe","Ni");	newSociotype("Fe","Se");	newSociotype("Fi","Ni");	newSociotype("Fi","Si");
+	newSociotype("Ni","Fe");	newSociotype("Ni","Ti");	newSociotype("Ne","Fi");	newSociotype("Ne","Te");
+	newSociotype("Se","Fe");	newSociotype("Se","Ti");	newSociotype("Si","Fi");	newSociotype("Si","Te");
+	newSociotype("Ti","Ni");	newSociotype("Ti","Se");	newSociotype("Te","Ne");	newSociotype("Te","Si");
+	s.currentSociotype = getSociotypeByName("NeTe"); }
+
+
+
+// SOCIOTYPE END, SPACE BEGIN
+
+
+
+function gO(x,y,z) { var ret; //getOctantByCoordinates
+	for(var i = 0; i < s.octants.length; i++) {
+		if((s.octants[i].x == x) && (s.octants[i].y == y) && (s.octants[i].z == z)) { return s.octants[i]; }}}
+function getOctantByString(str) {
+	for(var i = 0; i < s.octants.length; i++) {
+		if(s.octants[i].name == str) { return s.octants[i]; }}}
+function Octant(x,y,z) { this.x = x, this.y = y, this.z = z;
+	if(x && y && z)  { this.name = "Te";}		else if(x && y && !z) { this.name = "Ti";}
+	else if(x && !y && z) { this.name = "Si";}	else if(x && !y && !z){ this.name = "Se";}
+	else if(!x && y && z) { this.name = "Ne";}	else if(!x && y && !z){ this.name = "Ni";}
+	else if(!x && !y && z){ this.name = "Fi";}	else if(!x && !y && !z){this.name = "Fe";}}
+function newOctant(x,y,z) { var octant = new Octant(x,y,z); s.octants.push(octant); }
+function initSpace() {
+	newOctant(false,false,false);	newOctant(false,false,true);
+	newOctant(false,true,false);	newOctant(false,true,true);
+	newOctant(true,false,false);	newOctant(true,false,true);
+	newOctant(true,true,false);		newOctant(true,true,true);
+	//console.log(s.octants); // toimii
+	initSociotypes(); }
+
+
+
+// SPACE END
+
+
+
+function init() {
+	initSpace();
+	//initLanguages();
+	initTabs();
+	initHeader();
+	initContent(s.initTab);}
+	
+
+
+		</script>
+	</head>
+	<body onload="init();">
+		<div id="fontLoader" style="font-family: profont;">.</div>
+		<div id="wrapper">
+			<div id="header"></div>
+			<div id="content"></div>
+		</div>
+		<footer class="footer"></footer>
+	</body>
+</html>
